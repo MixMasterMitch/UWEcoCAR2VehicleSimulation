@@ -69,7 +69,7 @@ public class MalibuStepSimulator {
 		Double pedalPosition = this.getGasPedalPosition();
 			
 		// Calculate speed / rpm
-		this.speed += (this.getWheelForce() - this.getRollingResistance() - this.getAirResistance())/ this.MALIBU_WEIGHT * this.time_step;
+		this.speed += (this.getWheelForce() - this.getRollingResistance() - this.getAirResistance())/ MALIBU_WEIGHT * this.time_step;
 		this.speed = Math.max(this.speed, 0);
 				
 		this.distance += this.speed * this.time_step;
@@ -139,7 +139,7 @@ public class MalibuStepSimulator {
      * @return the current force exerted by the wheel on the road
      */
     public Double getWheelForce() {
-        return this.getTorque() / this.TIRE_RADIUS; // Nm / m -> N
+        return this.getTorque() / TIRE_RADIUS; // Nm / m -> N
     }
     
     /**
@@ -149,7 +149,7 @@ public class MalibuStepSimulator {
     public Double getRollingResistance() { // m/s
         // TODO: Handle reverse
         if (Math.round(this.speed*100)/100.0 > 0.0) { // We are going faster than .0005 m/s
-            return this.MALIBU_DOWN_FORCE * this.MALIBU_ROLLING_COEFF; // F = c W
+            return MALIBU_DOWN_FORCE * MALIBU_ROLLING_COEFF; // F = c W
         } else {
             return 0.0;
         }
@@ -161,7 +161,7 @@ public class MalibuStepSimulator {
      */
     public Double getAirResistance() { // m/s
 
-        return this.MALIBU_AIR_DRAG_COEFF * this.AIR_DENSITY * this.MALIBU_FRONTAL_AREA * Math.pow(this.speed, 2) / 2; // F = c 1/2 ρ v2 A
+        return MALIBU_AIR_DRAG_COEFF * AIR_DENSITY * MALIBU_FRONTAL_AREA * Math.pow(this.speed, 2) / 2; // F = c 1/2 ρ v2 A
     }
     
     /**
@@ -169,7 +169,7 @@ public class MalibuStepSimulator {
      * @return
      */
     public Double getRpm() {
-		return this.speed / (2 * this.TIRE_RADIUS * Math.PI ) * 60;
+		return this.speed / (2 * TIRE_RADIUS * Math.PI ) * 60;
 	}
     
     /**

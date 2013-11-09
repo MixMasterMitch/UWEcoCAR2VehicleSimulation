@@ -13,6 +13,8 @@ public class EntryPoint {
     public static final DecimalFormat DF = new DecimalFormat("0000.0");
 
     public static void main(String[] args) throws Exception {
+    	
+    	SimulationWindow window = new SimulationWindow();
 
         // Create a lookup table defining trq at the wheels from the engine
         // for a given gas pedal position and wheel rpm.
@@ -29,7 +31,9 @@ public class EntryPoint {
         LookUpTable1D lookUpTable1D = new LookUpTable1D(gas);
         
         MalibuStepSimulator simulator = new MalibuStepSimulator(lookUpTable1D, gasRpmTrq, TIME_STEP);
-
+        	
+        System.out.println("time [s]\tinput [%]\tspeed [mph]\trpm\ttrq [Nm]\tdistance [m]\tgas");
+        
         // Run the simulation
         while (simulator.getSimulationTime() < SIMULATION_LENGTH) {
         	// get gas input before step
@@ -40,17 +44,15 @@ public class EntryPoint {
         	
         	// output 
             System.out.println(
-                    "At time[s]: " + DF.format(simulator.getSimulationTime()) +
-                            " gas[%]: " + DF.format(pedalPosition) +
-                            " speed[mph]: " + DF.format(convertMpsToMph(simulator.getSpeed())) +
-                            " rpm: " + DF.format(simulator.getRpm()) +
-                            " trq[Nm]: " + DF.format(simulator.getTorque()) +
-                            " distance[m]: " + DF.format(simulator.getDistance()));
+                    DF.format( simulator.getSimulationTime() ) + "\t" +
+                    DF.format( pedalPosition ) + "\t" +
+                    DF.format( convertMpsToMph( simulator.getSpeed() ) ) + "\t" +
+                    DF.format( simulator.getRpm() ) + "\t" +
+                    DF.format( simulator.getTorque() ) + "\t" +
+                    DF.format( simulator.getDistance() ) + "\t" +
+                    DF.format( simulator.getGasSum() )
+            	);
         }
-
-        // Output simulation aggregate results
-        System.out.println("Total Gas Used: " + simulator.getGasSum());
-
     }
 
     /**

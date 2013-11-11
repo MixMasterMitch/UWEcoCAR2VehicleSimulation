@@ -40,6 +40,7 @@ public class JGraph extends JPanel {
 	 */
 	public void setData(Recorder data) {
 		this.data = data;
+		this.repaint();
 	}
 
 }

@@ -25,7 +25,7 @@ public class EntryPoint {
         
         
         
-        StepSimulator simulator = new MalibuStepSimulator(lookUpTable1D, gasRpmTrq, TIME_STEP);      
+        MalibuStepSimulator simulator = new MalibuStepSimulator(lookUpTable1D, gasRpmTrq, TIME_STEP);      
     	SimulationWindow window = new SimulationWindow(simulator);
     }
 }

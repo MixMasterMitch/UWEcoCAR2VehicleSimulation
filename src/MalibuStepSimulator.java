@@ -3,39 +3,36 @@ public class MalibuStepSimulator implements StepSimulator {
 	/************ CONTANT VARIABLES ************/
 	
 	 // The weight of the UW EcoCAR 2013 Chevy Malibu
-    private static final Double MALIBU_WEIGHT = 2200.0; // kg
+    private Double carWeight = 2200.0; // kg
 
-    // Gravitational Acceleration on Earth
-    private static final Double GRAVITY = 9.81; // m/s^2
-
-    // The weight of the UW EcoCAR 2013 Chevy Malibu
-    private static final Double MALIBU_DOWN_FORCE = MALIBU_WEIGHT * GRAVITY; // N
+	// Gravitational Acceleration on Earth
+    private Double gravity = 9.81; // m/s^2
 
     // The effective radius of the tires
-    private static final Double TIRE_RADIUS = .32; // m
+    private Double tireRadius = .32; // m
 
     // The density of air at STP
-    private static final Double AIR_DENSITY = 1.2; // kg / m^3
+    private Double airDensity = 1.2; // kg / m^3
 
     // The coefficient of air resistance of the 2013 Chevy Malibu
-    private static final Double MALIBU_AIR_DRAG_COEFF = .29;
+    private Double carAirDragCoeff = .29;
 
     // The coefficient of rolling resistance of the tires on the road
-    private static final Double MALIBU_ROLLING_COEFF = .02;
+    private Double carRollingCoeff = .02;
 
     // The frontal area of the 2013 Chevy Malibu (i.e. the cross sectional area)
-    private static final Double MALIBU_FRONTAL_AREA = 2.15; // m^2
+    private Double carFrontalArea = 2.15; // m^2
     
     /************ CUSTOM VARIABLES ************/
     
     // The amount of time between simulation steps. Lower number = more accurate and slower
-    private final Double time_step;
+    public final Double time_step;
     
     // A table of mapping time to gas input
-    private final LookUpTable1D gas;
+    public final LookUpTable1D gas;
     
     // the lookup table
-    private final LookUpTable2D gasRpmTrq;
+    public final LookUpTable2D gasRpmTrq;
     
     /************ DYNAMIC VARIABLES ************/
     
@@ -66,13 +63,13 @@ public class MalibuStepSimulator implements StepSimulator {
 	 * Step forward one time_step in the simulation
 	 */
 	public void step() {
-		Double pedalPosition = this.getGasPedalPosition();
+		Double pedalPosition = getGasPedalPosition();
 
-		this.speed.set( Math.max(this.speed.get() + (this.getWheelForce() - this.getRollingResistance() - this.getAirResistance())/ MALIBU_WEIGHT * this.time_step, 0.0));
-		this.distance.set( this.distance.get() + this.speed.get() * this.time_step );
-		this.gasSum.set( this.gasSum.get() + pedalPosition * this.time_step );
+		speed.set( Math.max(speed.get() + (getWheelForce() - getRollingResistance() - getAirResistance())/ getCarWeight() * time_step, 0.0));
+		distance.set( distance.get() + speed.get() * time_step );
+		gasSum.set( gasSum.get() + pedalPosition * time_step );
 		
-		this.steps++;
+		steps++;
 	}
 	
 	/**
@@ -88,7 +85,7 @@ public class MalibuStepSimulator implements StepSimulator {
 	 * @return
 	 */
 	public Double getSimulationTime() {
-		return this.getSteps() * this.time_step;
+		return getSteps() * time_step;
 	}
 	
 	/**
@@ -96,7 +93,7 @@ public class MalibuStepSimulator implements StepSimulator {
 	 * @return
 	 */
 	public Double getGasPedalPosition() {
-		return this.gas.getValue(this.getSimulationTime());
+		return gas.getValue(getSimulationTime());
 	}
 	
 	/**
@@ -112,7 +109,7 @@ public class MalibuStepSimulator implements StepSimulator {
      * @return
      */
 	public Double getTorque() {
-		return this.gasRpmTrq.getValue(this.getGasPedalPosition(), this.getRpm());
+		return gasRpmTrq.getValue(getGasPedalPosition(), getRpm());
 	}
 	
 	/**
@@ -136,7 +133,7 @@ public class MalibuStepSimulator implements StepSimulator {
      * @return the current force exerted by the wheel on the road
      */
     public Double getWheelForce() {
-        return this.getTorque() / TIRE_RADIUS; // Nm / m -> N
+        return getTorque() / getTireRadius(); // Nm / m -> N
     }
     
     /**
@@ -145,8 +142,8 @@ public class MalibuStepSimulator implements StepSimulator {
      */
     public Double getRollingResistance() { // m/s
         // TODO: Handle reverse
-        if (Math.round(this.getSpeed()*100)/100.0 > 0.0) { // We are going faster than .0005 m/s
-            return MALIBU_DOWN_FORCE * MALIBU_ROLLING_COEFF; // F = c W
+        if (Math.round(getSpeed()*100)/100.0 > 0.0) { // We are going faster than .0005 m/s
+            return getCarDownForce() * getCarRollingCoeff(); // F = c W
         } else {
             return 0.0;
         }
@@ -157,7 +154,7 @@ public class MalibuStepSimulator implements StepSimulator {
      * @return A positive number means a negative force
      */
     public Double getAirResistance() { // m/s
-        return MALIBU_AIR_DRAG_COEFF * AIR_DENSITY * MALIBU_FRONTAL_AREA * Math.pow(this.getSpeed(), 2) / 2; // F = c 1/2 ρ v2 A
+        return getCarAirDragCoeff() * getAirDensity() * getCarFrontalArea() * Math.pow(getSpeed(), 2) / 2; // F = c 1/2 ρ v2 A
     }
     
     /**
@@ -165,7 +162,7 @@ public class MalibuStepSimulator implements StepSimulator {
      * @return
      */
     public Double getRpm() {
-		return this.getSpeed() / (2 * TIRE_RADIUS * Math.PI ) * 60;
+		return getSpeed() / (2 * getTireRadius() * Math.PI ) * 60;
 	}
     
     /**
@@ -180,7 +177,60 @@ public class MalibuStepSimulator implements StepSimulator {
 	 * Returns true if the time is out of the defined range
 	 */
 	public boolean isDone() {
-		return !this.gas.isIn(this.getSimulationTime());
+		return !gas.isIn(getSimulationTime());
 	}
 	
+	public Double getCarWeight() {
+		return carWeight;
+	}
+	public void setCarWeight(Double carWeight) {
+		this.carWeight = carWeight;
+	}
+
+	public Double getGravity() {
+		return gravity;
+	}
+	public void setGravity(Double gravity) {
+		this.gravity = gravity;
+	}
+
+	public Double getCarDownForce() {
+		return getCarWeight() * getGravity();
+	}
+
+	public Double getTireRadius() {
+		return tireRadius;
+	}
+	public void setTireRadius(Double tireRadius) {
+		this.tireRadius = tireRadius;
+	}
+
+	public Double getAirDensity() {
+		return airDensity;
+	}
+	public void setAirDensity(Double airDensity) {
+		this.airDensity = airDensity;
+	}
+
+	public Double getCarAirDragCoeff() {
+		return carAirDragCoeff;
+	}
+	public void setCarAirDragCoeff(Double carAirDragCoeff) {
+		this.carAirDragCoeff = carAirDragCoeff;
+	}
+
+	public Double getCarRollingCoeff() {
+		return carRollingCoeff;
+	}
+	public void setCarRollingCoeff(Double carRollingCoeff) {
+		this.carRollingCoeff = carRollingCoeff;
+	}
+
+	public Double getCarFrontalArea() {
+		return carFrontalArea;
+	}
+	public void setCarFrontalArea(Double carFrontalArea) {
+		this.carFrontalArea = carFrontalArea;
+	}
+
 }

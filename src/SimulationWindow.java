@@ -18,12 +18,15 @@ import javax.swing.JTextField;
 
 public class SimulationWindow {
 	
-	private StepSimulator simulator;
+	private MalibuStepSimulator simulator;
 	public static final DecimalFormat DF = new DecimalFormat("0000.0");
 	
 	/************* GUI STUFF *************/
 	private final JTextArea console = new JTextArea();
 	private final JGraph graph = new JGraph();
+	
+	private final String[] graphOptions = {"Speed", "Distance", "Gas"}; 
+	private final JComboBox graphComboBox = new JComboBox(graphOptions);
 	
 	private final JButton backButton = new JButton("◀︎◀︎");
 	private final JButton unstepButton = new JButton("◀︎");
@@ -32,6 +35,7 @@ public class SimulationWindow {
 	
 	private final JTextField gravity = new JTextField(10);
 	private final JTextField airDensity = new JTextField(10);
+	
 	private final JTextField carWeight = new JTextField(10);
 	private final JTextField carAirDragCoeff = new JTextField(10);
 	private final JTextField carRollCoeff = new JTextField(10);
@@ -43,7 +47,7 @@ public class SimulationWindow {
 	 * Constructor
 	 * @param simulator
 	 */
-	public SimulationWindow(StepSimulator s) {
+	public SimulationWindow(MalibuStepSimulator s) {
 		this.simulator = s;
 		
 		JFrame mainWindow = new JFrame("Step Simulator");
@@ -62,10 +66,14 @@ public class SimulationWindow {
 			JPanel simControls = new JPanel();
 				simControls.setBorder(BorderFactory.createTitledBorder("Controls"));
 				simControls.setLayout(new BoxLayout(simControls, BoxLayout.X_AXIS));
-			
-				String[] graphOptions = {"Speed", "Torque", "Distance", "Gas"}; 
-				JComboBox graphComboBox = new JComboBox(graphOptions);
-					graphComboBox.setSelectedIndex(0);
+				
+				graphComboBox.setSelectedIndex(0);
+				graphComboBox.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent event) {
+						setGraph();
+					}
+				});
 					
 			simControls.add(graphComboBox);
 			simControls.add(backButton);
@@ -97,11 +105,13 @@ public class SimulationWindow {
 					carSettings.setBorder(BorderFactory.createTitledBorder("Car Settings"));
 					String[] cLabels = {"Weight", "Air Drag Coeff", "Rolling Coeff", "Frontal Area"};
 					JTextField[] cFields = {carWeight, carAirDragCoeff, carRollCoeff, carFrontalArea};
+					Double[] cValues = {simulator.getCarWeight(), simulator.getCarAirDragCoeff(), simulator.getCarRollingCoeff(), simulator.getCarFrontalArea()};
 					
 					for(int i = 0; i < cLabels.length; i++) {
 						JPanel l = new JPanel();
 							l.add(new JLabel(cLabels[i]));
 							l.add(cFields[i]);
+							cFields[i].setText(cValues[i].toString());
 						carSettings.add(l);
 					}
 				
@@ -112,15 +122,40 @@ public class SimulationWindow {
 						globalSettings.setBorder(BorderFactory.createTitledBorder("Global Settings"));
 						String[] gLabels = {"Gravity", "Air Density"};
 						JTextField[] gFields = {gravity, airDensity};
+						Double[] gValues = {simulator.getGravity(), simulator.getAirDensity()};
 						
 						for(int i = 0; i < gLabels.length; i++) {
 							JPanel l = new JPanel();
 								l.add(new JLabel(gLabels[i]));
+								gFields[i].setText(gValues[i].toString());
 								l.add(gFields[i]);
 							globalSettings.add(l);
 						}
 				saveAndGlobal.add(globalSettings);
 				saveAndGlobal.add(saveAndResetButton);
+				
+				saveAndResetButton.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent event) {
+						console.setText("time [s]\tinput [%]\tspeed [mph]\trpm\ttrq [Nm]\tdistance [m]\tgas\n");
+						simulator = new MalibuStepSimulator(simulator.gas, simulator.gasRpmTrq, simulator.time_step);
+						try {
+							simulator.setGravity(Double.parseDouble(gravity.getText()));
+							simulator.setAirDensity(Double.parseDouble(airDensity.getText()));
+							
+							simulator.setCarWeight(Double.parseDouble(carWeight.getText()));
+							simulator.setCarAirDragCoeff(Double.parseDouble(carAirDragCoeff.getText()));
+							simulator.setCarRollingCoeff(Double.parseDouble(carRollCoeff.getText()));
+							simulator.setCarFrontalArea(Double.parseDouble(carFrontalArea.getText()));
+						} catch(Exception e) {
+							console.setText("Error. Invalid settings.\n");
+						} finally {
+							setGraph();
+						}
+						
+						checkButtons();
+					}
+				});
 					
 			settings.add(carSettings);
 			settings.add(saveAndGlobal);
@@ -146,22 +181,57 @@ public class SimulationWindow {
         console.append("time [s]\tinput [%]\tspeed [mph]\trpm\ttrq [Nm]\tdistance [m]\tgas\n");
 	}
 	
+	/**
+	 * Runs the simulator for one step, updates the gui as needed
+	 */
 	public void step() {
 		this.simulator.step();
 		this.graph.repaint();
+		this.checkButtons();
 		this.printSimulator();
 	}
 	
+	/**
+	 * Writes the current simulator data to the console
+	 */
 	private void printSimulator() {
-		MalibuStepSimulator sim = (MalibuStepSimulator) this.simulator;
 		this.console.append(
-	        DF.format( sim.getSimulationTime() ) + "\t" +
-	        DF.format( sim.getGasPedalPosition() ) + "\t" +
-	        DF.format( sim.getSpeed() * 2.23) + "\t" +
-	        DF.format( sim.getRpm() ) + "\t" +
-	        DF.format( sim.getTorque() ) + "\t" +
-	        DF.format( sim.getDistance() ) + "\t" +
-	        DF.format( sim.getGasSum() ) + "\n"
+	        DF.format( simulator.getSimulationTime() ) + "\t" +
+	        DF.format( simulator.getGasPedalPosition() ) + "\t" +
+	        DF.format( simulator.getSpeed() * 2.23) + "\t" +
+	        DF.format( simulator.getRpm() ) + "\t" +
+	        DF.format( simulator.getTorque() ) + "\t" +
+	        DF.format( simulator.getDistance() ) + "\t" +
+	        DF.format( simulator.getGasSum() ) + "\n"
 		);
+	}
+	
+	/**
+	 * Sets the data of the graph based off the current selection
+	 */
+	private void setGraph() {
+		int index = graphComboBox.getSelectedIndex();
+		switch (index) {
+			case 0 : graph.setData(simulator.speed);
+				break;
+			case 1 : graph.setData(simulator.distance);
+				break;
+			case 2 : graph.setData(simulator.gasSum);
+				break;
+			default: graph.setData(simulator.speed);
+		}
+	}
+	
+	/**
+	 * Checks to see if the control buttons should be enabled or disabled
+	 */
+	private void checkButtons() {
+		if (simulator.isDone() && stepButton.isEnabled()) {
+			stepButton.setEnabled(false);
+			forwardButton.setEnabled(false);
+		} else if (!simulator.isDone() && !stepButton.isEnabled()) {
+			stepButton.setEnabled(true);
+			forwardButton.setEnabled(true);
+		}
 	}
 }

@@ -169,18 +169,20 @@ public class SimulationWindow {
 		// setup console
 		console.setEditable(false);
 		JScrollPane consoleScroller = new JScrollPane(console);
-		consoleScroller.setPreferredSize(new Dimension(400,0));
 		
 		// create main panel and fill it
 		JPanel mainPanel = new JPanel(new BorderLayout());
 			mainPanel.add(contentPanel, BorderLayout.LINE_START);
 			mainPanel.add(consoleScroller, BorderLayout.LINE_END);
+		
+		// put initial text in console
+	    console.append("time [s]\tinput [%]\tspeed [mph]\trpm\ttrq [Nm]\tdistance [m]\tgas\n");
+	
 			
 		// finally get add main panel to the frame and display window
 		mainWindow.getContentPane().add(mainPanel, BorderLayout.CENTER);
 		mainWindow.pack();
         mainWindow.setVisible(true);
-        console.append("time [s]\tinput [%]\tspeed [mph]\trpm\ttrq [Nm]\tdistance [m]\tgas\n");
 	}
 	
 	/**

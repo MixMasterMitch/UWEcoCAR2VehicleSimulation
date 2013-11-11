@@ -1,5 +1,8 @@
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.text.DecimalFormat;
 
 import javax.swing.JPanel;
 
@@ -9,8 +12,20 @@ public class JGraph extends JPanel {
 	private Recorder data;
 	
 	// the graph padding
-	private static final int OFFSET_X = 50;
-	private static final int OFFSET_Y = 50;
+	private static final int OFFSET_X = 75;
+	private static final int OFFSET_Y = 75;
+	private static final int SIZE = 2;
+	private static final int FONT_SIZE = 20;
+	
+	private static final DecimalFormat DF = new DecimalFormat("###.##");
+	private static final Font FONT = new Font("UNICODE", Font.PLAIN, FONT_SIZE);
+	private final FontMetrics METRICS;
+	
+	public JGraph() {
+		super();
+		this.setFont(FONT);
+		METRICS = this.getFontMetrics(FONT);
+	}
 	
 	@Override
 	public void paintComponent(Graphics g) {
@@ -23,14 +38,20 @@ public class JGraph extends JPanel {
 		g.drawLine(OFFSET_X, OFFSET_Y, OFFSET_X, height);
 		g.drawLine(OFFSET_X, height, width, height);
 		
-		double xMult = width/data.size();
-		double yMult = (height - OFFSET_Y)/data.max();
+		double xMult = ((double)width - OFFSET_X)/data.size();
+		double yMult = ((double)height - OFFSET_Y)/data.max();
+		
 		int index = 0;
 		for(Double value : data) {
 			int x = (int)(index*xMult) + OFFSET_X;
 			int y = (int)(value*yMult) - OFFSET_Y;
-			g.fillOval(x, height - y - OFFSET_Y, 3, 3);
+			g.fillOval(x - SIZE/2, height - y - OFFSET_Y - SIZE/2, SIZE, SIZE);
 			index++;
+		}		
+		g.drawString("0", OFFSET_X - FONT_SIZE, height + FONT_SIZE);
+		if (data.size() > 1) {
+			g.drawString(Integer.toString(data.size()),(int)(xMult * (data.size() - 1)) + OFFSET_X, height + FONT_SIZE);
+			g.drawString(DF.format(data.max()), OFFSET_X - (int)METRICS.getStringBounds(DF.format(data.max()), g).getWidth(), OFFSET_Y);
 		}
 	}
 	

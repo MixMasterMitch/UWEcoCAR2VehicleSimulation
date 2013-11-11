@@ -1,4 +1,4 @@
-public class MalibuStepSimulator {
+public class MalibuStepSimulator implements StepSimulator {
 	
 	/************ CONTANT VARIABLES ************/
 	
@@ -43,13 +43,13 @@ public class MalibuStepSimulator {
     private int steps;
     
     // the current speed of the car
-    private Double speed;
-    
+    public Recorder speed;
+       
     // the total distance the car has traveled
-    private Double distance;
+    public Recorder distance;
     
     // the total amount of gas used
-    private Double gasSum;
+    public Recorder gasSum;
         
 	public MalibuStepSimulator(LookUpTable1D gas, LookUpTable2D gasRpmTrq, Double time_step) {
 		this.gas = gas;
@@ -57,9 +57,9 @@ public class MalibuStepSimulator {
 		this.time_step = time_step;
 		
 		this.steps = 0;
-		this.speed = 0.0;
-		this.distance = 0.0;
-		this.gasSum = 0.0;
+		this.speed = new Recorder(0.0);
+		this.distance = new Recorder(0.0);
+		this.gasSum = new Recorder(0.0);
 	}
 	
 	/**
@@ -67,13 +67,10 @@ public class MalibuStepSimulator {
 	 */
 	public void step() {
 		Double pedalPosition = this.getGasPedalPosition();
-			
-		// Calculate speed / rpm
-		this.speed += (this.getWheelForce() - this.getRollingResistance() - this.getAirResistance())/ MALIBU_WEIGHT * this.time_step;
-		this.speed = Math.max(this.speed, 0);
-				
-		this.distance += this.speed * this.time_step;
-		this.gasSum += pedalPosition * this.time_step;
+
+		this.speed.set( Math.max(this.speed.get() + (this.getWheelForce() - this.getRollingResistance() - this.getAirResistance())/ MALIBU_WEIGHT * this.time_step, 0.0));
+		this.distance.set( this.distance.get() + this.speed.get() * this.time_step );
+		this.gasSum.set( this.gasSum.get() + pedalPosition * this.time_step );
 		
 		this.steps++;
 	}
@@ -107,7 +104,7 @@ public class MalibuStepSimulator {
 	 * @return
 	 */
     public Double getSpeed() {
-		return speed;
+		return speed.get();
 	}
     
     /**
@@ -123,7 +120,7 @@ public class MalibuStepSimulator {
 	 * @return
 	 */
 	public Double getDistance() {
-		return distance;
+		return distance.get();
 	}
 	
 	/**
@@ -131,7 +128,7 @@ public class MalibuStepSimulator {
 	 * @return
 	 */
 	public Double getGasSum() {
-		return gasSum;
+		return gasSum.get();
 	}
 	
 	 /**
@@ -148,7 +145,7 @@ public class MalibuStepSimulator {
      */
     public Double getRollingResistance() { // m/s
         // TODO: Handle reverse
-        if (Math.round(this.speed*100)/100.0 > 0.0) { // We are going faster than .0005 m/s
+        if (Math.round(this.getSpeed()*100)/100.0 > 0.0) { // We are going faster than .0005 m/s
             return MALIBU_DOWN_FORCE * MALIBU_ROLLING_COEFF; // F = c W
         } else {
             return 0.0;
@@ -160,8 +157,7 @@ public class MalibuStepSimulator {
      * @return A positive number means a negative force
      */
     public Double getAirResistance() { // m/s
-
-        return MALIBU_AIR_DRAG_COEFF * AIR_DENSITY * MALIBU_FRONTAL_AREA * Math.pow(this.speed, 2) / 2; // F = c 1/2 ρ v2 A
+        return MALIBU_AIR_DRAG_COEFF * AIR_DENSITY * MALIBU_FRONTAL_AREA * Math.pow(this.getSpeed(), 2) / 2; // F = c 1/2 ρ v2 A
     }
     
     /**
@@ -169,7 +165,7 @@ public class MalibuStepSimulator {
      * @return
      */
     public Double getRpm() {
-		return this.speed / (2 * TIRE_RADIUS * Math.PI ) * 60;
+		return this.getSpeed() / (2 * TIRE_RADIUS * Math.PI ) * 60;
 	}
     
     /**
@@ -178,6 +174,13 @@ public class MalibuStepSimulator {
      */
 	public int getSteps() {
 		return steps;
+	}
+	
+	/**
+	 * Returns true if the time is out of the defined range
+	 */
+	public boolean isDone() {
+		return !this.gas.isIn(this.getSimulationTime());
 	}
 	
 }

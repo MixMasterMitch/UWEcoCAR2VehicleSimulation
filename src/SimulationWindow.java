@@ -1,6 +1,9 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.DecimalFormat;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -15,7 +18,12 @@ import javax.swing.JTextField;
 
 public class SimulationWindow {
 	
+	private StepSimulator simulator;
+	public static final DecimalFormat DF = new DecimalFormat("0000.0");
+	
+	/************* GUI STUFF *************/
 	private final JTextArea console = new JTextArea();
+	private final JGraph graph = new JGraph();
 	
 	private final JButton backButton = new JButton("◀︎◀︎");
 	private final JButton unstepButton = new JButton("◀︎");
@@ -24,27 +32,32 @@ public class SimulationWindow {
 	
 	private final JTextField gravity = new JTextField(10);
 	private final JTextField airDensity = new JTextField(10);
-	
 	private final JTextField carWeight = new JTextField(10);
 	private final JTextField carAirDragCoeff = new JTextField(10);
 	private final JTextField carRollCoeff = new JTextField(10);
 	private final JTextField carFrontalArea = new JTextField(10);
+	private final JButton saveAndResetButton = new JButton("Save & Reset");
 	
-	public SimulationWindow() {
+	
+	/**
+	 * Constructor
+	 * @param simulator
+	 */
+	public SimulationWindow(StepSimulator s) {
+		this.simulator = s;
+		
 		JFrame mainWindow = new JFrame("Step Simulator");
 			mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			mainWindow.setBackground(Color.WHITE);
-
-			
 			
 		// create the main content panel and fill it	
 		JPanel contentPanel = new JPanel();
 			contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
 			contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
 			
-			JPanel graph = new JPanel();
-				graph.setBorder(BorderFactory.createTitledBorder("Graph"));
-				graph.setPreferredSize(new Dimension(500, 350));
+			graph.setData(((MalibuStepSimulator)simulator).speed);
+			graph.setBorder(BorderFactory.createTitledBorder("Graph"));
+			graph.setPreferredSize(new Dimension(500, 350));
 			
 			JPanel simControls = new JPanel();
 				simControls.setBorder(BorderFactory.createTitledBorder("Controls"));
@@ -60,6 +73,23 @@ public class SimulationWindow {
 			simControls.add(stepButton);
 			simControls.add(forwardButton);
 			
+			backButton.setEnabled(false);
+			unstepButton.setEnabled(false);
+			stepButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent event) {
+					step();
+				}
+			});
+			forwardButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent event) {
+					while(!simulator.isDone()) {
+						step();
+					}
+				}
+			});
+			
 			JPanel settings = new JPanel();
 				settings.setLayout(new BoxLayout(settings, BoxLayout.X_AXIS));
 				JPanel carSettings = new JPanel();
@@ -74,22 +104,26 @@ public class SimulationWindow {
 							l.add(cFields[i]);
 						carSettings.add(l);
 					}
+				
+				JPanel saveAndGlobal = new JPanel();
+					saveAndGlobal.setLayout(new BoxLayout(saveAndGlobal, BoxLayout.Y_AXIS));
+					JPanel globalSettings = new JPanel();
+						globalSettings.setLayout(new BoxLayout(globalSettings, BoxLayout.Y_AXIS));
+						globalSettings.setBorder(BorderFactory.createTitledBorder("Global Settings"));
+						String[] gLabels = {"Gravity", "Air Density"};
+						JTextField[] gFields = {gravity, airDensity};
 						
-				JPanel globalSettings = new JPanel();
-					globalSettings.setLayout(new BoxLayout(globalSettings, BoxLayout.Y_AXIS));
-					globalSettings.setBorder(BorderFactory.createTitledBorder("Global Settings"));
-					String[] gLabels = {"Gravity", "Air Density"};
-					JTextField[] gFields = {gravity, airDensity};
-					
-					for(int i = 0; i < gLabels.length; i++) {
-						JPanel l = new JPanel();
-							l.add(new JLabel(gLabels[i]));
-							l.add(gFields[i]);
-						globalSettings.add(l);
-					}
+						for(int i = 0; i < gLabels.length; i++) {
+							JPanel l = new JPanel();
+								l.add(new JLabel(gLabels[i]));
+								l.add(gFields[i]);
+							globalSettings.add(l);
+						}
+				saveAndGlobal.add(globalSettings);
+				saveAndGlobal.add(saveAndResetButton);
 					
 			settings.add(carSettings);
-			settings.add(globalSettings);
+			settings.add(saveAndGlobal);
 			
 		contentPanel.add(graph);
 		contentPanel.add(simControls);
@@ -109,5 +143,25 @@ public class SimulationWindow {
 		mainWindow.getContentPane().add(mainPanel, BorderLayout.CENTER);
 		mainWindow.pack();
         mainWindow.setVisible(true);
+        console.append("time [s]\tinput [%]\tspeed [mph]\trpm\ttrq [Nm]\tdistance [m]\tgas\n");
+	}
+	
+	public void step() {
+		this.simulator.step();
+		this.graph.repaint();
+		this.printSimulator();
+	}
+	
+	private void printSimulator() {
+		MalibuStepSimulator sim = (MalibuStepSimulator) this.simulator;
+		this.console.append(
+	        DF.format( sim.getSimulationTime() ) + "\t" +
+	        DF.format( sim.getGasPedalPosition() ) + "\t" +
+	        DF.format( sim.getSpeed() * 2.23) + "\t" +
+	        DF.format( sim.getRpm() ) + "\t" +
+	        DF.format( sim.getTorque() ) + "\t" +
+	        DF.format( sim.getDistance() ) + "\t" +
+	        DF.format( sim.getGasSum() ) + "\n"
+		);
 	}
 }

@@ -3,9 +3,6 @@ import java.util.TreeMap;
 
 public class EntryPoint {
 
-    // The amount of time between simulation steps. Lower number = more accurate and slower
-    public static final Double TIME_STEP = 0.1; // s
-
     public static void main(String[] args) throws Exception {
 
         // Create a lookup table defining trq at the wheels from the engine
@@ -25,7 +22,7 @@ public class EntryPoint {
         
         
         
-        MalibuStepSimulator simulator = new MalibuStepSimulator(lookUpTable1D, gasRpmTrq, TIME_STEP);      
+        MalibuStepSimulator simulator = new MalibuStepSimulator(lookUpTable1D, gasRpmTrq);      
     	SimulationWindow window = new SimulationWindow(simulator);
     }
 }

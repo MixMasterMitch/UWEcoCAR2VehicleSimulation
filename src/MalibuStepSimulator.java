@@ -7,6 +7,8 @@ public class MalibuStepSimulator implements StepSimulator {
 
 	// Gravitational Acceleration on Earth
     private Double gravity = 9.81; // m/s^2
+    
+    private Double timeStep = .1;
 
     // The effective radius of the tires
     private Double tireRadius = .32; // m
@@ -24,9 +26,6 @@ public class MalibuStepSimulator implements StepSimulator {
     private Double carFrontalArea = 2.15; // m^2
     
     /************ CUSTOM VARIABLES ************/
-    
-    // The amount of time between simulation steps. Lower number = more accurate and slower
-    public final Double time_step;
     
     // A table of mapping time to gas input
     public final LookUpTable1D gas;
@@ -48,10 +47,9 @@ public class MalibuStepSimulator implements StepSimulator {
     // the total amount of gas used
     public Recorder gasSum;
         
-	public MalibuStepSimulator(LookUpTable1D gas, LookUpTable2D gasRpmTrq, Double time_step) {
+	public MalibuStepSimulator(LookUpTable1D gas, LookUpTable2D gasRpmTrq) {
 		this.gas = gas;
 		this.gasRpmTrq = gasRpmTrq;
-		this.time_step = time_step;
 		
 		this.steps = 0;
 		this.speed = new Recorder(0.0);
@@ -65,9 +63,9 @@ public class MalibuStepSimulator implements StepSimulator {
 	public void step() {
 		Double pedalPosition = getGasPedalPosition();
 
-		speed.set( Math.max(speed.get() + (getWheelForce() - getRollingResistance() - getAirResistance())/ getCarWeight() * time_step, 0.0));
-		distance.set( distance.get() + speed.get() * time_step );
-		gasSum.set( gasSum.get() + pedalPosition * time_step );
+		speed.set( Math.max(speed.get() + (getWheelForce() - getRollingResistance() - getAirResistance())/ getCarWeight() * timeStep, 0.0));
+		distance.set( distance.get() + speed.get() * timeStep );
+		gasSum.set( gasSum.get() + pedalPosition * timeStep );
 		
 		steps++;
 	}
@@ -85,7 +83,7 @@ public class MalibuStepSimulator implements StepSimulator {
 	 * @return
 	 */
 	public Double getSimulationTime() {
-		return getSteps() * time_step;
+		return getSteps() * getTimeStep();
 	}
 	
 	/**
@@ -192,6 +190,13 @@ public class MalibuStepSimulator implements StepSimulator {
 	}
 	public void setGravity(Double gravity) {
 		this.gravity = gravity;
+	}
+	
+	public Double getTimeStep() {
+		return this.timeStep;
+	}
+	public void setTimeStep(Double timeStep) {
+		this.timeStep = timeStep;
 	}
 
 	public Double getCarDownForce() {

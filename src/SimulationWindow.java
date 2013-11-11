@@ -19,7 +19,7 @@ import javax.swing.JTextField;
 public class SimulationWindow {
 	
 	private MalibuStepSimulator simulator;
-	public static final DecimalFormat DF = new DecimalFormat("0000.0");
+	public static final DecimalFormat DF = new DecimalFormat("0000.00");
 	
 	/************* GUI STUFF *************/
 	private final JTextArea console = new JTextArea();
@@ -35,6 +35,7 @@ public class SimulationWindow {
 	
 	private final JTextField gravity = new JTextField(10);
 	private final JTextField airDensity = new JTextField(10);
+	private final JTextField timeStep = new JTextField(10);
 	
 	private final JTextField carWeight = new JTextField(10);
 	private final JTextField carAirDragCoeff = new JTextField(10);
@@ -120,9 +121,9 @@ public class SimulationWindow {
 					JPanel globalSettings = new JPanel();
 						globalSettings.setLayout(new BoxLayout(globalSettings, BoxLayout.Y_AXIS));
 						globalSettings.setBorder(BorderFactory.createTitledBorder("Global Settings"));
-						String[] gLabels = {"Gravity", "Air Density"};
-						JTextField[] gFields = {gravity, airDensity};
-						Double[] gValues = {simulator.getGravity(), simulator.getAirDensity()};
+						String[] gLabels = {"Gravity", "Air Density", "Time Step"};
+						JTextField[] gFields = {gravity, airDensity, timeStep};
+						Double[] gValues = {simulator.getGravity(), simulator.getAirDensity(), simulator.getTimeStep()};
 						
 						for(int i = 0; i < gLabels.length; i++) {
 							JPanel l = new JPanel();
@@ -138,10 +139,11 @@ public class SimulationWindow {
 					@Override
 					public void actionPerformed(ActionEvent event) {
 						console.setText("time [s]\tinput [%]\tspeed [mph]\trpm\ttrq [Nm]\tdistance [m]\tgas\n");
-						simulator = new MalibuStepSimulator(simulator.gas, simulator.gasRpmTrq, simulator.time_step);
+						simulator = new MalibuStepSimulator(simulator.gas, simulator.gasRpmTrq);
 						try {
 							simulator.setGravity(Double.parseDouble(gravity.getText()));
 							simulator.setAirDensity(Double.parseDouble(airDensity.getText()));
+							simulator.setTimeStep(Double.parseDouble(timeStep.getText()));
 							
 							simulator.setCarWeight(Double.parseDouble(carWeight.getText()));
 							simulator.setCarAirDragCoeff(Double.parseDouble(carAirDragCoeff.getText()));

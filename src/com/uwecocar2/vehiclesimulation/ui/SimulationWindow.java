@@ -1,3 +1,9 @@
+package com.uwecocar2.vehiclesimulation.ui;
+
+import com.uwecocar2.vehiclesimulation.DiscreteStepSimulator;
+import com.uwecocar2.vehiclesimulation.PlantModel;
+import com.uwecocar2.vehiclesimulation.ui.JGraph;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -18,14 +24,15 @@ import javax.swing.JTextField;
 
 public class SimulationWindow {
 	
-	private MalibuStepSimulator simulator;
+	private DiscreteStepSimulator simulator;
+    private PlantModel vehicle;
 	public static final DecimalFormat DF = new DecimalFormat("0000.00");
 	
 	/************* GUI STUFF *************/
 	private final JTextArea console = new JTextArea();
 	private final JGraph graph = new JGraph();
 	
-	private final String[] graphOptions = {"Speed", "Distance", "Gas"}; 
+	private final String[] graphOptions = {"Speed", "Distance", "Acceleration"};
 	private final JComboBox graphComboBox = new JComboBox(graphOptions);
 	
 	private final JButton backButton = new JButton("◀︎◀︎");
@@ -46,9 +53,13 @@ public class SimulationWindow {
 	
 	/**
 	 * Constructor
-	 * @param simulator
 	 */
-	public SimulationWindow(MalibuStepSimulator s) {
+	public SimulationWindow(DiscreteStepSimulator s) {
+        if (s.vehicle instanceof PlantModel) {
+            vehicle = (PlantModel) s.vehicle;
+        } else {
+            throw new IllegalArgumentException();
+        }
 		this.simulator = s;
 		
 		JFrame mainWindow = new JFrame("Step Simulator");
@@ -60,7 +71,7 @@ public class SimulationWindow {
 			contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
 			contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
 			
-			graph.setData(((MalibuStepSimulator)simulator).speed);
+			graph.setData(vehicle.getVelocityRecorder());
 			graph.setBorder(BorderFactory.createTitledBorder("Graph"));
 			graph.setPreferredSize(new Dimension(500, 350));
 			
@@ -87,7 +98,9 @@ public class SimulationWindow {
 			stepButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent event) {
-					step();
+                    if(!simulator.isDone()) {
+                        step();
+                    }
 				}
 			});
 			forwardButton.addActionListener(new ActionListener() {
@@ -104,9 +117,9 @@ public class SimulationWindow {
 				JPanel carSettings = new JPanel();
 					carSettings.setLayout(new BoxLayout(carSettings, BoxLayout.Y_AXIS));
 					carSettings.setBorder(BorderFactory.createTitledBorder("Car Settings"));
-					String[] cLabels = {"Weight", "Air Drag Coeff", "Rolling Coeff", "Frontal Area"};
+					String[] cLabels = {"Mass", "Air Drag Coeff", "Rolling Coeff", "Frontal Area"};
 					JTextField[] cFields = {carWeight, carAirDragCoeff, carRollCoeff, carFrontalArea};
-					Double[] cValues = {simulator.getCarWeight(), simulator.getCarAirDragCoeff(), simulator.getCarRollingCoeff(), simulator.getCarFrontalArea()};
+					Double[] cValues = {vehicle.params.getMass(), vehicle.params.getAirDragCoeff(), vehicle.params.getRollingCoeff(), vehicle.params.getFrontalArea()};
 					
 					for(int i = 0; i < cLabels.length; i++) {
 						JPanel l = new JPanel();
@@ -123,7 +136,7 @@ public class SimulationWindow {
 						globalSettings.setBorder(BorderFactory.createTitledBorder("Global Settings"));
 						String[] gLabels = {"Gravity", "Air Density", "Time Step"};
 						JTextField[] gFields = {gravity, airDensity, timeStep};
-						Double[] gValues = {simulator.getGravity(), simulator.getAirDensity(), simulator.getTimeStep()};
+						Double[] gValues = {vehicle.params.getGravity(), vehicle.params.getAirDensity(), simulator.getTimeStep()};
 						
 						for(int i = 0; i < gLabels.length; i++) {
 							JPanel l = new JPanel();
@@ -138,17 +151,17 @@ public class SimulationWindow {
 				saveAndResetButton.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent event) {
-						console.setText("time [s]\tinput [%]\tspeed [mph]\trpm\ttrq [Nm]\tdistance [m]\tgas\n");
-						simulator = new MalibuStepSimulator(simulator.gas, simulator.gasRpmTrq);
+						console.setText("time [s]\tinput [%]\tspeed [mph]\trpm\ttrq [Nm]\tdistance [m]\n");
+						simulator.reset();
 						try {
-							simulator.setGravity(Double.parseDouble(gravity.getText()));
-							simulator.setAirDensity(Double.parseDouble(airDensity.getText()));
+                            vehicle.params.setGravity(Double.parseDouble(gravity.getText()));
+                            vehicle.params.setAirDensity(Double.parseDouble(airDensity.getText()));
 							simulator.setTimeStep(Double.parseDouble(timeStep.getText()));
-							
-							simulator.setCarWeight(Double.parseDouble(carWeight.getText()));
-							simulator.setCarAirDragCoeff(Double.parseDouble(carAirDragCoeff.getText()));
-							simulator.setCarRollingCoeff(Double.parseDouble(carRollCoeff.getText()));
-							simulator.setCarFrontalArea(Double.parseDouble(carFrontalArea.getText()));
+
+                            vehicle.params.setMass(Double.parseDouble(carWeight.getText()));
+                            vehicle.params.setAirDragCoeff(Double.parseDouble(carAirDragCoeff.getText()));
+                            vehicle.params.setRollingCoeff(Double.parseDouble(carRollCoeff.getText()));
+                            vehicle.params.setFrontalArea(Double.parseDouble(carFrontalArea.getText()));
 						} catch(Exception e) {
 							console.setText("Error. Invalid settings.\n");
 						} finally {
@@ -176,7 +189,7 @@ public class SimulationWindow {
 			mainPanel.add(consoleScroller, BorderLayout.LINE_END);
 		
 		// put initial text in console
-	    console.append("time [s]\tinput [%]\tspeed [mph]\trpm\ttrq [Nm]\tdistance [m]\tgas\n");
+	    console.append("time [s]\tinput [%]\tspeed [mph]\trpm\ttrq [Nm]\tdistance [m]\n");
 	
 			
 		// finally get add main panel to the frame and display window
@@ -199,15 +212,12 @@ public class SimulationWindow {
 	 * Writes the current simulator data to the console
 	 */
 	private void printSimulator() {
-		this.console.append(
-	        DF.format( simulator.getSimulationTime() ) + "\t" +
-	        DF.format( simulator.getGasPedalPosition() ) + "\t" +
-	        DF.format( simulator.getSpeed() * 2.23) + "\t" +
-	        DF.format( simulator.getRpm() ) + "\t" +
-	        DF.format( simulator.getTorque() ) + "\t" +
-	        DF.format( simulator.getDistance() ) + "\t" +
-	        DF.format( simulator.getGasSum() ) + "\n"
-		);
+		this.console.append(DF.format( simulator.getSimulationTime() ) + "\t");
+        this.console.append(DF.format( simulator.getGasPedalPosition() == null ? 0.0 : simulator.getGasPedalPosition() ) + "\t");
+        this.console.append(DF.format( vehicle.getVelocity() ) + "\t");
+        this.console.append(DF.format( vehicle.getWheelAngularVelocity() ) + "\t");
+        this.console.append(DF.format( vehicle.getEngineTorque() ) + "\t");
+        this.console.append(DF.format( vehicle.getDistanceTravelled() ) + "\n");
 	}
 	
 	/**
@@ -216,13 +226,13 @@ public class SimulationWindow {
 	private void setGraph() {
 		int index = graphComboBox.getSelectedIndex();
 		switch (index) {
-			case 0 : graph.setData(simulator.speed);
+			case 0 : graph.setData(vehicle.getVelocityRecorder());
 				break;
-			case 1 : graph.setData(simulator.distance);
+			case 1 : graph.setData(vehicle.getDistanceTravelledRecorder());
 				break;
-			case 2 : graph.setData(simulator.gasSum);
+			case 2 : graph.setData(vehicle.getAccelerationRecorder());
 				break;
-			default: graph.setData(simulator.speed);
+			default: graph.setData(vehicle.getVelocityRecorder());
 		}
 	}
 	

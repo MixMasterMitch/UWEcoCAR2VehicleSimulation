@@ -1,3 +1,8 @@
+package com.uwecocar2.vehiclesimulation.utils;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.*;
 
 public class LookUpTable1D {
@@ -9,6 +14,22 @@ public class LookUpTable1D {
 
     public LookUpTable1D(Map<Double, Double> data) {
         this.data = new TreeMap<Double, Double>(data);
+    }
+
+    public LookUpTable1D(File file, int keyColumn, int valueColumn) throws Exception {
+        this();
+        BufferedReader br = new BufferedReader(new FileReader(file));
+
+        String row;
+        while ((row = br.readLine()) != null) {
+            if (row.matches("^\\s*#.*")) {
+                continue;
+            }
+            String[] rowParts = row.trim().split("\\s+");
+            this.data.put(Double.parseDouble(rowParts[keyColumn]), Double.parseDouble(rowParts[valueColumn]));
+        }
+
+        br.close();
     }
 
     /**

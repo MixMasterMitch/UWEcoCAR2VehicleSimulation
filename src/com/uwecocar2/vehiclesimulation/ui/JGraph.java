@@ -1,3 +1,7 @@
+package com.uwecocar2.vehiclesimulation.ui;
+
+import com.uwecocar2.vehiclesimulation.Recorder;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -38,8 +42,15 @@ public class JGraph extends JPanel {
 		g.drawLine(OFFSET_X, OFFSET_Y, OFFSET_X, height);
 		g.drawLine(OFFSET_X, height, width, height);
 		
-		double xMult = ((double)width - OFFSET_X)/data.size();
-		double yMult = ((double)height - OFFSET_Y)/data.max();
+		double xMult;
+        double yMult;
+        try {
+            xMult = ((double)width - OFFSET_X)/data.size();
+            yMult = ((double)height - OFFSET_Y)/data.max();
+        } catch (Exception e) {
+            xMult = 0;
+            yMult = 0;
+        }
 		
 		int index = 0;
 		for(Double value : data) {

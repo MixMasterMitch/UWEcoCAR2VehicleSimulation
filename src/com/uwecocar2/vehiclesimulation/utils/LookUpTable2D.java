@@ -1,5 +1,7 @@
+package com.uwecocar2.vehiclesimulation.utils;
+
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.io.FileReader;
 import java.util.*;
 
@@ -15,13 +17,15 @@ public class LookUpTable2D {
     }
 
     // In the text file, the first row is the pedal positions, the first column is the rpm values.
-    public LookUpTable2D(String file) throws Exception {
+    public LookUpTable2D(File file) throws Exception {
         Map<Double, LookUpTable1D> tempData = new LinkedHashMap<Double, LookUpTable1D>();
 
         BufferedReader br = new BufferedReader(new FileReader(file));
 
         // Find all of the column keys
-        String[] columns = br.readLine().split("\\s+");
+        String firstLine;
+        while ((firstLine = br.readLine()).matches("^\\s*#.*")) {}
+        String[] columns = firstLine.trim().split("\\s+");
         for (String column : columns) {
             if (!column.equals("")) {
                 tempData.put(Double.parseDouble(column), new LookUpTable1D());
@@ -32,7 +36,7 @@ public class LookUpTable2D {
         String row;
         while ((row = br.readLine()) != null) {
             int rowPartsIndex = 0;
-            String[] rowParts = row.split("\\s+");
+            String[] rowParts = row.trim().split("\\s+");
 
             // Get to the row key
             while (rowParts[rowPartsIndex].equals("")) {

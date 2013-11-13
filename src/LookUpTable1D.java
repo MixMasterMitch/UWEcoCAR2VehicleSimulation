@@ -47,5 +47,12 @@ public class LookUpTable1D {
         // (y2 - y1 / x2 - x1)(x - x1) + y1
         return (afterEntry.getValue() - beforeEntry.getValue()) / (afterEntry.getKey() - beforeEntry.getKey()) * (x - beforeEntry.getKey()) + beforeEntry.getValue();
     }
+    
+    /**
+     * Determines if the key is contained within the upper and lower bounds of the table
+     */
+    public boolean isIn(Double x) {
+    	return inTable(x) || (data.lowerEntry(x) != null && data.higherEntry(x) != null);
+    }
 
 }

@@ -214,7 +214,7 @@ public class SimulationWindow {
 	private void printSimulator() {
 		this.console.append(DF.format( simulator.getSimulationTime() ) + "\t");
         this.console.append(DF.format( simulator.getGasPedalPosition() == null ? 0.0 : simulator.getGasPedalPosition() ) + "\t");
-        this.console.append(DF.format( vehicle.getVelocity() ) + "\t");
+        this.console.append(DF.format( vehicle.getVelocity() * 2.24) + "\t");
         this.console.append(DF.format( vehicle.getWheelAngularVelocity() ) + "\t");
         this.console.append(DF.format( vehicle.getEngineTorque() ) + "\t");
         this.console.append(DF.format( vehicle.getDistanceTravelled() ) + "\n");

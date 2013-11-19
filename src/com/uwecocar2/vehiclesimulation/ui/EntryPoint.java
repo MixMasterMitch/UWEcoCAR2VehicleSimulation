@@ -12,7 +12,7 @@ public class EntryPoint {
 
     public static void main(String[] args) throws Exception {
         DiscreteStepSimulator simulator = new DiscreteStepSimulator(
-                new DriveCycle(new File("driveCycles/simpleDrive.txt")),
+                new DriveCycle(new File("driveCycles/pedalToTheMetalDrive.txt")),
                 new PlantModel(new PlantModel.Parameters()),
                 DiscreteStepSimulator.DEFUALT_TIME_STEP);
     	SimulationWindow window = new SimulationWindow(simulator);

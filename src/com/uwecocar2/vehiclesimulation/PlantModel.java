@@ -3,7 +3,6 @@ package com.uwecocar2.vehiclesimulation;
 import com.uwecocar2.vehiclesimulation.utils.LookUpTable2D;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 
 public class PlantModel implements Vehicle {
 
@@ -91,7 +90,7 @@ public class PlantModel implements Vehicle {
 
     @Override
     public Double getMotorTorque() {
-        return 0.0;
+        return params.getMotorTorque(gasPedalPosition, getWheelAngularVelocity());
     }
 
     @Override
@@ -136,7 +135,7 @@ public class PlantModel implements Vehicle {
 
     @Override
     public void cycle(Double length) {
-        acceleration.set((getEngineTorqueAtWheels() - getRollingResistance() - getAirResistance()) / params.getMass());
+        acceleration.set((getEngineForceAtWheels() + getMotorForceAtWheels() - getRollingResistance() - getAirResistance()) / params.getMass());
         velocity.set(Math.max(velocity.get() + acceleration.get() * length, 0.0));
         distance.set(distance.get() + velocity.get() * length);
     }
@@ -148,8 +147,12 @@ public class PlantModel implements Vehicle {
         distance = new Recorder(0.0);
     }
 
-    private Double getEngineTorqueAtWheels() {
+    private Double getEngineForceAtWheels() {
         return getEngineTorque() / params.getTireRadius();
+    }
+
+    private Double getMotorForceAtWheels() {
+        return getMotorTorque() / params.getTireRadius();
     }
 
     private Double getCarDownForce() {
@@ -181,10 +184,12 @@ public class PlantModel implements Vehicle {
         // Create a lookup table defining trq at the wheels from the engine
         // for a given gas pedal position and wheel rpm.
         // In the text file, the first row is the pedal positions, the first column is the rpm values.
-        private LookUpTable2D gasRpmTrq;
+        private LookUpTable2D gasRpmTrqEngine;
+        private LookUpTable2D gasRpmTrqMotor;
 
         public Parameters() throws Exception {
-            gasRpmTrq = new LookUpTable2D(new File("lookUpTables/gasRpmTrq.txt"));
+            gasRpmTrqEngine = new LookUpTable2D(new File("lookUpTables/gasRpmTrqEngine.txt"));
+            gasRpmTrqMotor = new LookUpTable2D(new File("lookUpTables/gasRpmTrqMotor.txt"));
         }
 
         public Double getTireRadius() {
@@ -243,12 +248,20 @@ public class PlantModel implements Vehicle {
             this.gravity = gravity;
         }
 
-        public Double getEngineTorque(Double gasPedalPosition, Double torque) {
-            return gasRpmTrq.getValue(gasPedalPosition, torque);
+        public Double getEngineTorque(Double gasPedalPosition, Double rpm) {
+            return gasRpmTrqEngine.getValue(gasPedalPosition, rpm);
         }
 
         public void setEngineTorqueMap(File gasRpmTrq) throws Exception {
-            this.gasRpmTrq = new LookUpTable2D(gasRpmTrq);
+            this.gasRpmTrqEngine = new LookUpTable2D(gasRpmTrq);
+        }
+
+        public Double getMotorTorque(Double gasPedalPosition, Double rpm) {
+            return gasRpmTrqMotor.getValue(gasPedalPosition, rpm);
+        }
+
+        public void setMotorTorqueMap(File gasRpmTrq) throws Exception {
+            this.gasRpmTrqMotor = new LookUpTable2D(gasRpmTrq);
         }
     }
 }

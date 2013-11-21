@@ -81,6 +81,14 @@ public class DiscreteStepSimulator implements StepSimulator {
 	}
 	
 	/**
+	 * Determines if the drive cycle has started
+	 * @return true if the cycle has started, false otherwise
+	 */
+	public boolean isStarted() {
+		return steps > 0;
+	}
+	
+	/**
 	 * Returns true if the time is out of the defined range
 	 */
 	public boolean isDone() {
